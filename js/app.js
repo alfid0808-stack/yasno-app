@@ -175,7 +175,19 @@ function renderNav(){
 function go(name){ SCREEN = name; ({ home:renderHome, review:renderReview, stats:renderStats, settings:renderSettings })[name](); window.scrollTo(0, 0); }
 window.addEventListener("yasno:native-review", () => { dueIds().length ? startReview() : go("home"); });
 const announce = msg => { const lv = $("#live"); if (lv){ lv.textContent = ""; setTimeout(() => { lv.textContent = msg; }, 30); } };
-function hideDock(){ dock.className = "dock hidden"; dockIn.innerHTML = ""; }
+function syncVisualViewport(){
+  const h = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+  document.documentElement.style.setProperty("--vvh", Math.max(240, h) + "px");
+}
+function prepareFeedback(){
+  const a = document.activeElement;
+  if (a && (a.matches("input,textarea,select") || a.isContentEditable)) a.blur();
+  syncVisualViewport();
+  document.body.classList.add("feedback-open");
+  dock.scrollTop = 0;
+  setTimeout(syncVisualViewport, 80);
+}
+function hideDock(){ dock.className = "dock hidden"; dockIn.innerHTML = ""; document.body.classList.remove("feedback-open"); }
 function applyTheme(){
   if (S.theme === "auto") document.documentElement.removeAttribute("data-theme"); else document.documentElement.setAttribute("data-theme", S.theme);
   const dark = S.theme === "dark" || (S.theme === "auto" && matchMedia("(prefers-color-scheme: dark)").matches);
@@ -545,6 +557,7 @@ function resolveUncertain(t, assessment){
   L.done++; L.uncertain.push({ it, given });
   const g = 2; L.xp += g; addXP(g); save();
   announce("Ответ отличается от эталона. Он не засчитан как ошибка и не влияет на интервалы повторения.");
+  prepareFeedback();
   dock.className = "dock";
   dockIn.innerHTML = `<p class="fb-title">Нужна сверка</p><p class="fb-mine">Ваш ответ: ${esc(pretty(given))}</p><p class="fb-text fb-right">Один из эталонов: <b>${esc(pretty(it.en[0]))}</b></p><p class="fb-why">Формулировка отличается лексически. Без семантической проверки приложение не считает её ни правильной, ни ошибочной — SRS и статистика памяти не меняются.</p><div class="fb-links">${canTTS ? `<button class="linkbtn" id="fbSay">🔊 Прослушать эталон</button>` : ""}<button class="linkbtn" id="fbMine">${trustMine() ? "Сохранить мой вариант локально" : "Сохранить как кандидат"}</button><button class="linkbtn" id="fbRule">Правило</button></div><button class="btn main" id="next">Дальше</button>`;
   $("#next").onclick = next; $("#next").focus({preventScroll:true});
@@ -571,7 +584,12 @@ function resolve(ok, t, source = "official"){
     else if (!prod && !speak){ stamp(Store.srsRecognize(S, it.id, today()), it.id); S.stats.rec.n++; L.askedR++; if (ok){ S.stats.rec.ok++; L.rightR++; } }
   }
   if (ok){ L.done++; const g = local ? 4 : first ? (prod ? 10 : 6) : 5; L.xp += g; addXP(g); sfx.ok(); }
-  else { L.mistakes.push({ it, given: answer }); L.tasks.push(buildTask(it, t.type === "choose" || t.type === "listenChoose" ? "tiles" : t.type)); sfx.bad(); }
+  else {
+    L.mistakes.push({ it, given: answer });
+    if (first) L.tasks.push(buildTask(it, t.type === "choose" || t.type === "listenChoose" ? "tiles" : t.type));
+    else L.done++; /* вторая ошибка по той же фразе не создаёт бесконечную очередь повторов */
+    sfx.bad();
+  }
   save();
   const typed = ["type","listen","tiles","speak"].includes(t.type);
   const unit = UNIT[it.unit];
@@ -583,6 +601,7 @@ function resolve(ok, t, source = "official"){
   }
   const alt = ok && !local && typed && it.en.length > 1 && !isSame(answer, it.en[0]) ? `<p class="fb-text note">Ещё можно: ${esc(pretty(it.en[0]))}</p>` : "";
   announce(local ? "Принято локально. На интервалы повторения не влияет." : ok ? "Верно." : `Не совсем. Правильно: ${it.en[0]}`);
+  prepareFeedback();
   dock.className = "dock " + (ok ? "ok" : "bad");
   dockIn.innerHTML = `
     <p class="fb-title">${local ? "Принято локально" : ok ? "Верно" : near ? "Почти" : "Не совсем"}</p>
@@ -612,7 +631,13 @@ function resolve(ok, t, source = "official"){
   };
 }
 const isSame = (a, b) => expansions(a)[0] === expansions(b)[0];
-function next(){ if (!locked) return; locked = false; L.i++; if (L.i >= L.tasks.length) finish(); else renderTask(); }
+function next(){
+  if (!locked) return;
+  const nx = $("#next"); if (nx) nx.disabled = true;
+  locked = false;
+  L.i++;
+  if (L.i >= L.tasks.length) finish(); else renderTask();
+}
 
 function finish(){
   SCREEN = "result"; hideDock(); document.body.classList.add("in-lesson"); renderNav();
@@ -659,6 +684,9 @@ document.addEventListener("keydown", e => {
 });
 
 /* =========================== START =========================== */
+syncVisualViewport();
+if (window.visualViewport) window.visualViewport.addEventListener("resize", syncVisualViewport);
+window.addEventListener("orientationchange", () => setTimeout(syncVisualViewport, 80));
 applyTheme();
 matchMedia("(prefers-color-scheme: dark)").addEventListener && matchMedia("(prefers-color-scheme: dark)").addEventListener("change", applyTheme);
 go("home");

@@ -1,5 +1,5 @@
 /* Офлайн-кэш: оболочка приложения кэшируется при установке, обновляется при смене VERSION. */
-const VERSION = "yasno-private-2026-10-23-2";
+const VERSION = "yasno-safari-2026-10-23-3";
 const SHELL = ["./","index.html","styles.css","js/content.js","js/vocab.js","js/vocab2.js","js/grammar2.js","js/ext_a2b1.js","js/ext_b2.js","js/ext_c1.js","js/order.js","js/engine.js","js/store.js","js/app.js","manifest.webmanifest","icons/icon.svg","icons/icon-192.png","icons/icon-512.png","icons/apple-touch-icon.png"];
 self.addEventListener("install", e => { e.waitUntil(caches.open(VERSION).then(c => c.addAll(SHELL)).then(() => self.skipWaiting())); });
 self.addEventListener("activate", e => {

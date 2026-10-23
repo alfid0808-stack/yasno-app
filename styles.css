@@ -144,8 +144,10 @@ textarea.answer:focus{ border-color:var(--accent); outline:none; }
 .heard{ margin-top:12px; color:var(--ink-soft); }
 .linkbtn{ background:none; border:0; color:var(--accent); font-weight:700; padding:8px 0; text-decoration:underline; text-underline-offset:3px; }
 
-.dock{ position:fixed; left:0; right:0; bottom:0; background:var(--paper); border-top:1px solid var(--line); padding:14px 18px calc(14px + var(--sab)); z-index:20; max-height:60vh; overflow:auto; }
+.dock{ position:fixed; left:0; right:0; bottom:0; background:var(--paper); border-top:1px solid var(--line); padding:14px 18px calc(14px + var(--sab)); z-index:20; max-height:min(72vh,calc(var(--vvh,100vh) - 12px)); overflow:auto; overscroll-behavior:contain; -webkit-overflow-scrolling:touch; }
 .dock-in{ max-width:680px; margin:0 auto; }
+.dock #next{ position:sticky; bottom:0; z-index:2; margin-top:8px; box-shadow:0 -8px 14px -12px rgba(0,0,0,.5); }
+body.feedback-open .page{ padding-bottom:calc(250px + var(--sab)); }
 .dock.ok{ background:var(--ok-bg); border-color:transparent; }
 .dock.bad{ background:var(--bad-bg); border-color:transparent; }
 .fb-title{ font-family:var(--display); font-weight:800; font-size:20px; margin:0 0 6px; }
