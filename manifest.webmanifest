@@ -1,0 +1,17 @@
+{
+  "name": "Ясно — английский для тех, кто думает по-русски",
+  "short_name": "Ясно",
+  "description": "Короткие уроки английского с разбором типичных ошибок на русском и интервальным повторением.",
+  "lang": "ru",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#EEF2F8",
+  "theme_color": "#2B4CDB",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
