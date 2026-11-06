@@ -162,10 +162,79 @@
       icon.textContent=nextState==="ok" ? "✓" : "!";
       title.prepend(icon);
     }
-    if (nextState === "ok"){popXP();burst(16,false)}
+    if(nextState==="ok"){
+      streak++;
+      popXP();burst(streak%5===0?35:16,false);
+      var label=app.querySelector(".streak-display");
+      if(label){label.textContent="✦ Серия: "+streak;label.classList.remove("streak-pulse");void label.offsetWidth;label.classList.add("streak-pulse");}
+      var buddy=app.querySelector(".mini-orb");
+      if(buddy){buddy.classList.remove("buddy-jump");void buddy.offsetWidth;buddy.classList.add("buddy-jump");}
+      if(streak%5===0)milestone();
+    }else{
+      streak=0;
+      var label=app.querySelector(".streak-display");if(label)label.textContent="✦ Серия: 0";
+    }
   }
 
-  function enhance(){decorateHome();decorateLesson();decorateResult();decorateDock()}
+  var streak=0, seenResult=null;
+  function moreEffects(){
+    var lesson=app.querySelector(".lesson-top");
+    if(lesson && !lesson.querySelector(".streak-display")){
+      var display=document.createElement("div");
+      display.className="streak-display";
+      display.textContent="✦ Серия: "+streak;
+      lesson.appendChild(display);
+    }
+    var result=app.querySelector(".result");
+    if(result && seenResult!==result){
+      seenResult=result;
+      var note=document.createElement("p");
+      note.className="play-victory-note";
+      note.textContent="Отличная работа! Каждый урок — новый уровень.";
+      result.appendChild(note);
+    }
+    var hero=app.querySelector(".hero-playful");
+    if(hero && !hero.querySelector(".play-sparkles")){
+      var stars=document.createElement("div");
+      stars.className="play-sparkles";
+      stars.setAttribute("aria-hidden","true");
+      for(var i=0;i<8;i++){
+        var star=document.createElement("span");
+        star.textContent=i%2?"✧":"✦";
+        star.style.left=(10+i*11)+"%";
+        star.style.top=(8+(i*17)%75)+"%";
+        star.style.animationDelay=(i*.3)+"s";
+        stars.appendChild(star);
+      }
+      hero.appendChild(stars);
+    }
+  }
+  function milestone(){
+    if(!motion)return;
+    var toast=document.createElement("div");
+    toast.className="play-milestone";
+    toast.setAttribute("role","status");
+    toast.textContent="✦ "+streak+" правильных подряд!";
+    document.body.appendChild(toast);
+    window.setTimeout(function(){toast.remove()},1600);
+  }
+  function bindEffects(){
+    app.querySelectorAll(".opt,.tile,.mt,.action,.unit,.btn").forEach(function(el){
+      if(el.dataset.rippleBound)return;
+      el.dataset.rippleBound="1";
+      el.addEventListener("pointerdown",function(ev){
+        if(!motion||el.disabled)return;
+        var dot=document.createElement("span");
+        dot.className="play-ripple";
+        var rect=el.getBoundingClientRect();
+        dot.style.left=(ev.clientX-rect.left)+"px";
+        dot.style.top=(ev.clientY-rect.top)+"px";
+        el.appendChild(dot);
+        window.setTimeout(function(){dot.remove()},460);
+      },{passive:true});
+    });
+  }
+  function enhance(){decorateHome();decorateLesson();decorateResult();decorateDock();moreEffects();bindEffects()}
   function schedule(){
     if(queued)return;
     queued=true;
