@@ -466,10 +466,25 @@ function renderTask(){
     const a = $("#ans"); a.addEventListener("input", () => { answer = a.value; showCheck(a.value.trim().length > 0); });
     if (matchMedia("(hover:hover)").matches || t.type === "type") setTimeout(() => a.focus(), 60);
   }
-  if (["choose","listenChoose","listen"].includes(t.type)){
-    const sp = $("#sp"); if (sp) sp.onclick = () => say(it.en[0]);
-    const sps = $("#sps"); if (sps) sps.onclick = () => say(it.en[0], 0.65);
-    if (t.type !== "choose") setTimeout(() => say(it.en[0]), 250);
+  /* Озвучка каждой английской фразы при открытии задания, в том числе на iPhone.
+     Вызываем синхронно из пользовательского нажатия «Начать» / «Дальше»:
+     отложенный setTimeout может блокироваться Safari до жеста пользователя. */
+  if (canTTS){
+    const spoken = t.type === "match" ? t.left[0]?.en[0] : it.en[0];
+    const sp = $("#sp");
+    if (sp) sp.onclick = () => say(spoken);
+    const sps = $("#sps");
+    if (sps) sps.onclick = () => say(spoken, 0.65);
+    if (!sp){
+      const replay = document.createElement("div");
+      replay.className = "speakrow";
+      replay.innerHTML = '<button class="speakbtn" id="sp" type="button" aria-label="Повторить английскую фразу">🔊</button><button class="speakbtn slow" id="sps" type="button">Медленно</button>';
+      const label = $(".task-label", app);
+      if (label) label.after(replay);
+      $("#sp").onclick = () => say(spoken);
+      $("#sps").onclick = () => say(spoken, 0.65);
+    }
+    if (spoken) say(spoken);
   }
   if (t.type === "tiles"){
     const ta = $("#ta"), tb = $("#tb"), picked = [];
